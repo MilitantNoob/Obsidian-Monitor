@@ -1,0 +1,240 @@
+<Window x:Class="ObsidianMonitor.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="Obsidian Settings" Height="680" Width="440"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <!-- Apple-like Capsule Toggle Chip -->
+        <Style x:Key="CapsuleToggle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="#1A1A1A" />
+            <Setter Property="Foreground" Value="#888888" />
+            <Setter Property="BorderBrush" Value="#333333" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="16" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="#00FFFF" />
+                                <Setter Property="Foreground" Value="#050505" />
+                                <Setter Property="BorderBrush" Value="#00FFFF" />
+                                <Setter Property="FontWeight" Value="ExtraBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Standard Apple-like Toggle Switch (Replaces CheckBox) -->
+        <Style x:Key="AppleSwitch" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Margin" Value="0,8,0,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <!-- Extracted Switch UI -->
+                            <Border Grid.Column="1" x:Name="SwitchBg" Width="40" Height="22" CornerRadius="11" Background="#2A2A2A" BorderBrush="#111" BorderThickness="1">
+                                <Ellipse x:Name="Knob" Width="18" Height="18" Fill="Gray" HorizontalAlignment="Left" Margin="1,0,0,0" VerticalAlignment="Center">
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform X="0" x:Name="KnobTransform" />
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="SwitchBg" Property="Background" Value="#00FF66"/>
+                                <Setter TargetName="Knob" Property="Fill" Value="White"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="KnobTransform" Storyboard.TargetProperty="X" To="18" Duration="0:0:0.15" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="KnobTransform" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.15" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#00FFFF" />
+            <Setter Property="FontWeight" Value="ExtraBold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="SubHeaderStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="Gray" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="0,8,0,2" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RenderTransform>
+            <TranslateTransform x:Name="WindowTranslate" Y="40" />
+        </Grid.RenderTransform>
+        <Border x:Name="MainContainer" Opacity="0" Background="#0A0A0A" CornerRadius="24" BorderBrush="#1B1B1B" BorderThickness="1.5">
+            <Grid Margin="25">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Title Bar -->
+                <Grid Grid.Row="0" Margin="0,0,0,15" MouseLeftButtonDown="TitleBar_MouseDown" Background="Transparent" Cursor="SizeAll">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <iconPacks:PackIconMaterial Kind="Cog" Foreground="White" Width="20" Height="20" Margin="0,0,10,0" />
+                        <TextBlock Text="OBSIDIAN HUD MANAGER" Foreground="White" FontSize="18" FontWeight="Black"/>
+                    </StackPanel>
+                    <Button Content="✕" HorizontalAlignment="Right" Width="30" Height="30" 
+                            Background="Transparent" Foreground="Gray" BorderThickness="0"
+                            Click="Close_Click" FontSize="14" Cursor="Hand"/>
+                </Grid>
+
+                <!-- Scrollable Content with Hidden ScrollBar -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" PanningMode="VerticalOnly" ClipToBounds="True">
+                    <StackPanel Margin="0,0,0,0">
+                        
+                        <!-- 1. ELEMENTS -->
+                        <StackPanel Orientation="Horizontal" Margin="0,15,0,8">
+                            <iconPacks:PackIconMaterial Kind="Layers" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="1. CORE ELEMENTS" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        <WrapPanel x:Name="CoreElementsPanel" Orientation="Horizontal"/>
+
+                        <!-- 2. GAME ELEMENTS -->
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                            <iconPacks:PackIconMaterial Kind="GamepadVariant" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="2. GAME METRICS" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        <WrapPanel x:Name="GameElementsPanel" Orientation="Horizontal"/>
+
+                        <!-- 3. FANS -->
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                            <iconPacks:PackIconMaterial Kind="Fan" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="3. FANS DETECTED" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        <WrapPanel x:Name="FansPanel" Orientation="Horizontal"/>
+
+                        <!-- 4. POSITION -->
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                            <iconPacks:PackIconMaterial Kind="CursorMove" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="4. POSITIONING &amp; SIZE" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        
+                        <CheckBox x:Name="LockPositionCheck" Content="Lock HUD Position (Disable Dragging)" Style="{StaticResource AppleSwitch}" Checked="SettingChanged" Unchecked="SettingChanged"/>
+                        
+                        <Grid Margin="0,5,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Interface UI Scale:" Style="{StaticResource SubHeaderStyle}" FontSize="13" Foreground="White" VerticalAlignment="Center" Margin="0"/>
+                            <TextBlock Grid.Column="1" x:Name="ScaleText" Text="100%" Foreground="#00FFFF" FontSize="13" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="-" Width="32" Height="32" Background="#1A1A1A" Foreground="White" BorderThickness="1" BorderBrush="#333" FontWeight="Bold" FontSize="18" Click="ScaleDown_Click" Cursor="Hand" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                            <Button Grid.Column="3" Content="+" Width="32" Height="32" Margin="10,0,0,0" Background="#1A1A1A" Foreground="White" BorderThickness="1" BorderBrush="#333" FontWeight="Bold" FontSize="18" Click="ScaleUp_Click" Cursor="Hand" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                        </Grid>
+
+                        <!-- 5. APPEARANCE -->
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                            <iconPacks:PackIconMaterial Kind="Palette" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="5. APPEARANCE" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        
+                        <TextBlock Text="Theme Engine" Style="{StaticResource SubHeaderStyle}"/>
+                        <ComboBox x:Name="ThemeCombo" Margin="0,0,0,15" SelectionChanged="ThemeCombo_SelectionChanged" Height="30" Background="#121212" Foreground="Black" Padding="10,5" Cursor="Hand">
+                            <ComboBoxItem Content="Black"/>
+                            <ComboBoxItem Content="White"/>
+                            <ComboBoxItem Content="Glass"/>
+                            <ComboBoxItem Content="Custom"/>
+                        </ComboBox>
+
+                        <StackPanel x:Name="CustomColorPanel" Visibility="Collapsed" Margin="0,0,0,15">
+                            <TextBlock Text="Hex Background (e.g. #E6000000)" Style="{StaticResource SubHeaderStyle}"/>
+                            <TextBox x:Name="CustomColorText" TextChanged="SettingChanged" Height="25" Padding="5,2" Background="#1A1A1A" Foreground="White" BorderBrush="#333"/>
+                        </StackPanel>
+                        
+                        <CheckBox x:Name="ShowTempCheck" Content="Show Device Temperatures" Style="{StaticResource AppleSwitch}" Checked="SettingChanged" Unchecked="SettingChanged"/>
+
+                        <!-- 6. HOTKEYS -->
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                            <iconPacks:PackIconMaterial Kind="Keyboard" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="6. SHORTCUT / HOTKEY" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        <TextBlock Text="Toggle HUD Visibility:" Style="{StaticResource SubHeaderStyle}"/>
+                        <Grid Margin="0,5,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="HotkeyTextBox" IsReadOnly="True" Text="Alt + S" Height="30" Padding="10,0" Background="#1A1A1A" Foreground="#00FFFF" FontWeight="Bold" BorderBrush="#333" VerticalContentAlignment="Center"/>
+                            <Button Grid.Column="1" x:Name="RecordHotkeyBtn" Content="Record" Margin="10,0,0,0" Padding="15,0" Background="#2A2A2A" Foreground="White" BorderThickness="1" BorderBrush="#444" Click="RecordHotkeyBtn_Click" Cursor="Hand"/>
+                            <Button Grid.Column="2" x:Name="RestoreHotkeyBtn" Content="Restore" Margin="10,0,0,0" Padding="15,0" Background="#2A2A2A" Foreground="Gray" BorderThickness="1" BorderBrush="#444" Click="RestoreHotkeyBtn_Click" Cursor="Hand"/>
+                        </Grid>
+
+                        <!-- 7. SYSTEM OPTS -->
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                            <iconPacks:PackIconMaterial Kind="Monitor" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="7. SYSTEM" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        <CheckBox x:Name="AutoStartCheck" Content="Run automatically on startup" Style="{StaticResource AppleSwitch}" Checked="AutoStartCheck_Checked" Unchecked="AutoStartCheck_Checked" Margin="0,5,0,20"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Bottom Actions -->
+                <Button Grid.Row="2" Margin="0,10,0,0" Height="44" 
+                        Background="#00FFFF" Foreground="#050505" FontWeight="Bold" FontSize="14" BorderThickness="0"
+                        Click="Close_Click" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Check" Foreground="#050505" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Apply &amp; Close" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

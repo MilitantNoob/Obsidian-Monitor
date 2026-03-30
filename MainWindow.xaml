@@ -1,0 +1,48 @@
+<Window x:Class="ObsidianMonitor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ObsidianMonitor"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="Obsidian Monitor" SizeToContent="Width" Height="250"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        SnapsToDevicePixels="True" UseLayoutRounding="True" SizeChanged="Window_SizeChanged">
+    
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Margin="100,15,100,50">
+        <Grid.LayoutTransform>
+            <ScaleTransform x:Name="SettingsScale" ScaleX="1.0" ScaleY="1.0"/>
+        </Grid.LayoutTransform>
+        
+        <StackPanel x:Name="MasterStack" VerticalAlignment="Top" HorizontalAlignment="Center" MouseEnter="Hud_MouseEnter" MouseLeave="Hud_MouseLeave">
+            <StackPanel.RenderTransform>
+                <TranslateTransform x:Name="MasterTranslate" Y="0"/>
+            </StackPanel.RenderTransform>
+            
+            <!-- Main Obsidian Capsule Background -->
+            <Border x:Name="MainContainer" Background="#050505" CornerRadius="38"
+                    BorderBrush="#1B1B1B" BorderThickness="1.5"
+                    Margin="0,15,0,0" Padding="12,8" HorizontalAlignment="Center"
+                    MouseLeftButtonDown="Window_MouseLeftButtonDown">
+                
+                <StackPanel x:Name="ElementsContainer" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Dynamic Elements will be injected here via code-behind -->
+                </StackPanel>
+            </Border>
+            
+            <!-- Quick Access Tray -->
+            <Border x:Name="QuickAccessTray" Background="#050505" CornerRadius="18"
+                    BorderBrush="#1B1B1B" BorderThickness="1.5" Opacity="0"
+                    Margin="0,8,0,0" Padding="18,10"
+                    HorizontalAlignment="Center" RenderTransformOrigin="0.5, 0">
+                <Border.RenderTransform>
+                    <ScaleTransform x:Name="TrayScale" ScaleY="0"/>
+                </Border.RenderTransform>
+                <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                    <WrapPanel x:Name="TrayElementsContainer" Orientation="Horizontal" HorizontalAlignment="Center" MaxWidth="800">
+                        <!-- Tiny toggle items injected via code-behind -->
+                    </WrapPanel>
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
+    </Grid>
+</Window>
