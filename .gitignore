@@ -31,11 +31,7 @@ config.json
 ObsidianMonitor_Setup.exe
 
 # --- Web Project (React/Vite) ---
-node_modules/
-ObsidianMonitor-Website/node_modules/
-ObsidianMonitor-Website/dist/
-ObsidianMonitor-Website/.env
-ObsidianMonitor-Website/.env.local
+ObsidianMonitor-Website/
 
 # --- OS Specific ---
 Thumbs.db
@@ -47,3 +43,4 @@ desktop.ini
 .gemini/
 build_output.txt
 CreateInstaller.ps1
+setup.iss
