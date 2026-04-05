@@ -1,4 +1,4 @@
-# Visual Studio
+# --- Visual Studio & .NET ---
 .vs/
 [Bb]in/
 [Oo]bj/
@@ -14,7 +14,7 @@
 *.vshost.exe.config
 *.vshost.exe.manifest
 
-# Build and Publish
+# --- Build & Runtime Artifacts ---
 publish/
 dist/
 *.log
@@ -24,13 +24,26 @@ dist/
 *.sav
 *.old
 *.cache
+*.pdb
 
-# Project Specific
+# --- Obsidian Monitor Specific ---
 config.json
-
-# Project Specific Assets
 ObsidianMonitor_Setup.exe
 
-# Website Project (Hidden from main repo)
-ObsidianMonitor-Website/
+# --- Web Project (React/Vite) ---
+node_modules/
+ObsidianMonitor-Website/node_modules/
+ObsidianMonitor-Website/dist/
+ObsidianMonitor-Website/.env
+ObsidianMonitor-Website/.env.local
 
+# --- OS Specific ---
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# --- Git / Tools ---
+.antigravity/
+.gemini/
+build_output.txt
+CreateInstaller.ps1

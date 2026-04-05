@@ -12,7 +12,7 @@ The easiest way to get started is to use the pre-built installer. It handles per
 2. **Follow the Setup**: The application will install to your system and can be launched from the Start menu.
 3. **Enjoy**: The HUD will appear immediately, providing real-time hardware metrics.
 
-### 🔄 Upgrading
+### 🔄 Upgrading (v2.2.0)
 If you already have an older version installed, simply download and run the new `ObsidianMonitor_Setup.exe`. The installer will automatically overwrite the previous version and preserve your settings. No manual uninstallation is required.
 
 ---

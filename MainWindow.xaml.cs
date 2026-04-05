@@ -191,7 +191,7 @@ namespace ObsidianMonitor
         private Computer _computer;
         private FpsTracker _fpsTracker;
         private ProcessManager _processManager;
-        private bool _isDropdownOpen = false;
+
         private DispatcherTimer _timer;
         private DispatcherTimer _animationTimer;
         private AppConfig _config;
@@ -536,69 +536,78 @@ namespace ObsidianMonitor
             }
 
             // --- PROCESS MONITOR TRAY CONTROLS ---
-            var processDiv = new Border { CornerRadius = new CornerRadius(12), Padding = new Thickness(10,6,10,6), Margin = new Thickness(4,4,4,4), BorderBrush = new SolidColorBrush(Color.FromArgb(0x44,0xFF,0xFF,0xFF)), BorderThickness = new Thickness(1) };
+            var processDiv = new Border { 
+                CornerRadius = new CornerRadius(12), 
+                Padding = new Thickness(12,6,12,6), 
+                Margin = new Thickness(4,4,4,4), 
+                BorderBrush = new SolidColorBrush(Color.FromArgb(0x44,0xFF,0xFF,0xFF)), 
+                BorderThickness = new Thickness(1),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Background = _config.IsProcessMonitorActive ? _dimBrush : Brushes.Transparent
+            };
+            
+            processDiv.MouseEnter += (s,e) => { if (!_config.IsProcessMonitorActive) processDiv.Background = new SolidColorBrush(Color.FromArgb(0x22, 0xFF,0xFF,0xFF)); };
+            processDiv.MouseLeave += (s,e) => { if (!_config.IsProcessMonitorActive) processDiv.Background = Brushes.Transparent; };
+
             var scrollStack = new StackPanel { Orientation = Orientation.Horizontal };
             
             var procIcon = new PackIconMaterial { Kind = PackIconMaterialKind.MonitorStar, Width=16, Height=16, Foreground = _config.IsProcessMonitorActive ? Brushes.White : Brushes.Gray, VerticalAlignment = VerticalAlignment.Center };
-            var procText = new TextBlock { Text = "APPS", Foreground = _config.IsProcessMonitorActive ? Brushes.White : Brushes.Gray, FontSize=11, FontWeight=FontWeights.Bold, Margin=new Thickness(6,0,8,0), VerticalAlignment = VerticalAlignment.Center };
+            var procText = new TextBlock { Text = "APPS", Foreground = _config.IsProcessMonitorActive ? Brushes.White : Brushes.Gray, FontSize=11, FontWeight=FontWeights.Bold, Margin=new Thickness(6,0,10,0), VerticalAlignment = VerticalAlignment.Center };
             
-            var dropdownBorder = new Border { 
-                Background = _dimBrush, CornerRadius = new CornerRadius(8), Margin=new Thickness(4,0,0,0), Padding=new Thickness(8,0,8,0),
-                Visibility = _config.IsProcessMonitorActive ? Visibility.Visible : Visibility.Collapsed,
-                Cursor = System.Windows.Input.Cursors.Hand
-            };
-            var dropdownLbl = new TextBlock { Text = _config.ProcessSortMetric, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center, FontSize=11, Margin=new Thickness(0,0,6,0), FontWeight = FontWeights.Bold };
-            var dropdownIcon = new PackIconMaterial { Kind = PackIconMaterialKind.ChevronDown, Width=12, Height=12, Foreground=Brushes.Gray, VerticalAlignment = VerticalAlignment.Center };
-            var drpStack = new StackPanel { Orientation = Orientation.Horizontal };
-            drpStack.Children.Add(dropdownLbl);
-            drpStack.Children.Add(dropdownIcon);
-            dropdownBorder.Child = drpStack;
+            scrollStack.Children.Add(procIcon);
+            scrollStack.Children.Add(procText);
 
-            var popup = new System.Windows.Controls.Primitives.Popup { StaysOpen = false, PlacementTarget = dropdownBorder, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom, AllowsTransparency = true };
-            
-            popup.Opened += (s,e) => _isDropdownOpen = true;
-            popup.Closed += (s,e) => { 
-                _isDropdownOpen = false;
-                Dispatcher.InvokeAsync(async () => {
-                    await System.Threading.Tasks.Task.Delay(50);
-                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned && !_isDropdownOpen) {
-                        Hud_MouseLeave(this, null!);
-                    }
-                });
-            };
-            
-            var popupBorder = new Border { Background = _darkBrush, BorderBrush = new SolidColorBrush(Color.FromArgb(0x44,0xFF,0xFF,0xFF)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Margin = new Thickness(0,4,0,0), Padding=new Thickness(4) };
-            var popupStack = new StackPanel();
-            popupBorder.Child = popupStack;
-            popup.Child = popupBorder;
+            if (_config.IsProcessMonitorActive)
+            {
+                string[] opts = { "CPU", "RAM", "GPU", "DISK", "NET" };
+                PackIconMaterialKind[] icns = { PackIconMaterialKind.Cpu64Bit, PackIconMaterialKind.Memory, PackIconMaterialKind.ExpansionCardVariant, PackIconMaterialKind.Harddisk, PackIconMaterialKind.NetworkOutline };
 
-            string[] opts = { "CPU", "RAM", "DISK", "NETWORK", "GPU" };
-            PackIconMaterialKind[] icns = { PackIconMaterialKind.Cpu64Bit, PackIconMaterialKind.Memory, PackIconMaterialKind.Harddisk, PackIconMaterialKind.NetworkOutline, PackIconMaterialKind.ExpansionCardVariant };
+                foreach(var opt in opts) {
+                    bool isActive = _config.ProcessSortMetric == (opt == "NET" ? "NETWORK" : opt);
+                    var metricBtn = new Border {
+                        CornerRadius = new CornerRadius(8),
+                        Padding = new Thickness(8, 4, 8, 4),
+                        Margin = new Thickness(2, 0, 2, 0),
+                        Cursor = System.Windows.Input.Cursors.Hand,
+                        Background = isActive ? _cyanBrush : new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF)),
+                        BorderBrush = isActive ? _cyanBrush : new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF)),
+                        BorderThickness = new Thickness(1)
+                    };
 
-            for(int i=0; i<opts.Length; i++) {
-                string opt = opts[i];
-                var iborder = new Border { Background = Brushes.Transparent, CornerRadius=new CornerRadius(6), Padding=new Thickness(8,6,8,6), Cursor = System.Windows.Input.Cursors.Hand };
-                var istack = new StackPanel { Orientation = Orientation.Horizontal };
-                istack.Children.Add(new PackIconMaterial { Kind = icns[i], Width=12, Height=12, Foreground=Brushes.White, VerticalAlignment = VerticalAlignment.Center, Margin=new Thickness(0,0,8,0) });
-                istack.Children.Add(new TextBlock { Text = opt, Foreground=Brushes.White, FontSize=11, VerticalAlignment = VerticalAlignment.Center });
-                iborder.Child = istack;
-                
-                iborder.MouseEnter += (s,e) => iborder.Background = _dimBrush;
-                iborder.MouseLeave += (s,e) => iborder.Background = Brushes.Transparent;
-                iborder.MouseLeftButtonDown += (s,e) => {
-                    e.Handled = true;
-                    _config.ProcessSortMetric = opt;
-                    _config.Save();
-                    dropdownLbl.Text = opt;
-                    popup.IsOpen = false;
-                    _processManager.UpdateImmediate(opt); // update dynamically without full layout rebuild if possible
-                    UpdateProcessUI();
-                };
-                popupStack.Children.Add(iborder);
+                    var btnStack = new StackPanel { Orientation = Orientation.Horizontal };
+                    btnStack.Children.Add(new PackIconMaterial { 
+                        Kind = icns[Array.IndexOf(opts, opt)], 
+                        Width = 11, Height = 11, 
+                        Foreground = isActive ? Brushes.Black : Brushes.White, 
+                        VerticalAlignment = VerticalAlignment.Center, 
+                        Margin = new Thickness(0,0,5,0) 
+                    });
+                    btnStack.Children.Add(new TextBlock { 
+                        Text = opt, 
+                        Foreground = isActive ? Brushes.Black : Brushes.White, 
+                        FontSize = 10, 
+                        FontWeight = FontWeights.Bold, 
+                        VerticalAlignment = VerticalAlignment.Center 
+                    });
+                    metricBtn.Child = btnStack;
+
+                    metricBtn.MouseEnter += (s,e) => { if (!isActive) metricBtn.Background = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)); };
+                    metricBtn.MouseLeave += (s,e) => { if (!isActive) metricBtn.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF)); };
+
+                    metricBtn.MouseLeftButtonDown += (s, e) => {
+                        e.Handled = true;
+                        string targetMetric = (opt == "NET" ? "NETWORK" : opt);
+                        if (_config.ProcessSortMetric != targetMetric)
+                        {
+                            _config.ProcessSortMetric = targetMetric;
+                            _config.Save();
+                            RebuildUIAndApplyConfig();
+                        }
+                    };
+
+                    scrollStack.Children.Add(metricBtn);
+                }
             }
-
-            dropdownBorder.MouseEnter += (s,e) => { popup.IsOpen = true; };
-            dropdownBorder.MouseLeftButtonDown += (s,e) => { e.Handled = true; popup.IsOpen = true; };
 
             processDiv.MouseLeftButtonDown += (s, e) => {
                 e.Handled = true;
@@ -607,12 +616,10 @@ namespace ObsidianMonitor
                 RebuildUIAndApplyConfig();
             };
 
-            scrollStack.Children.Add(procIcon);
-            scrollStack.Children.Add(procText);
-            scrollStack.Children.Add(dropdownBorder);
             processDiv.Child = scrollStack;
             TrayElementsContainer.Children.Add(processDiv);
         }
+
 
         private PackIconMaterialKind GetIconForKey(string key)
         {
@@ -1299,7 +1306,7 @@ namespace ObsidianMonitor
 
         private void Hud_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (_isDropdownOpen) return;
+
 
             var ease = new QuinticEase { EasingMode = EasingMode.EaseIn };
             QuickAccessTray.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(200)));
@@ -1309,7 +1316,7 @@ namespace ObsidianMonitor
             {
                 ProcessContainer.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(250)) { EasingFunction = ease });
                 System.Threading.Tasks.Task.Delay(250).ContinueWith(_ => Dispatcher.Invoke(() => {
-                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned && !_isDropdownOpen)
+                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned)
                         ProcessContainer.Visibility = Visibility.Collapsed;
                 }));
             }
@@ -1327,7 +1334,7 @@ namespace ObsidianMonitor
                 var ease = new QuinticEase { EasingMode = EasingMode.EaseIn };
                 ProcessContainer.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(250)) { EasingFunction = ease });
                 System.Threading.Tasks.Task.Delay(250).ContinueWith(_ => Dispatcher.Invoke(() => {
-                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned && !_isDropdownOpen)
+                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned)
                         ProcessContainer.Visibility = Visibility.Collapsed;
                 }));
             }
