@@ -56,6 +56,7 @@ namespace ObsidianMonitor
             // Positions & Basics
             LockPositionCheck.IsChecked = _config.IsLocked;
             ShowTempCheck.IsChecked = _config.ShowTemperature;
+            ProcessMonitorCheck.IsChecked = _config.IsProcessMonitorActive;
             ScaleText.Text = $"{Math.Round(_config.SizeScale * 100)}%";
             CustomColorText.Text = _config.CustomColor;
 
@@ -132,6 +133,9 @@ namespace ObsidianMonitor
 
             _config.IsLocked = LockPositionCheck.IsChecked == true;
             _config.ShowTemperature = ShowTempCheck.IsChecked == true;
+            if (ProcessMonitorCheck != null) {
+                _config.IsProcessMonitorActive = ProcessMonitorCheck.IsChecked == true;
+            }
             
             if (ThemeCombo.SelectedItem is ComboBoxItem item)
             {

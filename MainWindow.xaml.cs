@@ -190,6 +190,8 @@ namespace ObsidianMonitor
     {
         private Computer _computer;
         private FpsTracker _fpsTracker;
+        private ProcessManager _processManager;
+        private bool _isDropdownOpen = false;
         private DispatcherTimer _timer;
         private DispatcherTimer _animationTimer;
         private AppConfig _config;
@@ -248,6 +250,7 @@ namespace ObsidianMonitor
 
             _computer = new Computer { IsCpuEnabled = true, IsGpuEnabled = true, IsMemoryEnabled = true, IsMotherboardEnabled = true, IsControllerEnabled = true };
             _fpsTracker = new FpsTracker();
+            _processManager = new ProcessManager();
             _notifyIcon = new System.Windows.Forms.NotifyIcon();
 
             SetupNotifyIcon();
@@ -432,6 +435,36 @@ namespace ObsidianMonitor
                         kvp.Value.SubText.Visibility = _config.ShowTemperature ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
+
+            ApplyPinState();
+        }
+
+        private void ApplyPinState()
+        {
+            if (PinIcon != null)
+            {
+                PinIcon.Kind = _config.IsProcessMonitorPinned ? PackIconMaterialKind.Pin : PackIconMaterialKind.PinOutline;
+                PinIcon.Foreground = _config.IsProcessMonitorPinned ? Brushes.White : Brushes.Gray;
+            }
+
+            if (_config.IsProcessMonitorPinned)
+            {
+                ProcessContainer.Visibility = Visibility.Visible;
+                ProcessContainer.Opacity = 1;
+                if (MasterStack.Children.IndexOf(ProcessContainer) != 1)
+                {
+                    MasterStack.Children.Remove(ProcessContainer);
+                    MasterStack.Children.Insert(1, ProcessContainer);
+                }
+            }
+            else
+            {
+                if (MasterStack.Children.IndexOf(ProcessContainer) != 2)
+                {
+                    MasterStack.Children.Remove(ProcessContainer);
+                    MasterStack.Children.Insert(2, ProcessContainer);
+                }
+            }
         }
 
         private void BuildDynamicUI()
@@ -501,6 +534,84 @@ namespace ObsidianMonitor
 
                 TrayElementsContainer.Children.Add(border);
             }
+
+            // --- PROCESS MONITOR TRAY CONTROLS ---
+            var processDiv = new Border { CornerRadius = new CornerRadius(12), Padding = new Thickness(10,6,10,6), Margin = new Thickness(4,4,4,4), BorderBrush = new SolidColorBrush(Color.FromArgb(0x44,0xFF,0xFF,0xFF)), BorderThickness = new Thickness(1) };
+            var scrollStack = new StackPanel { Orientation = Orientation.Horizontal };
+            
+            var procIcon = new PackIconMaterial { Kind = PackIconMaterialKind.MonitorStar, Width=16, Height=16, Foreground = _config.IsProcessMonitorActive ? Brushes.White : Brushes.Gray, VerticalAlignment = VerticalAlignment.Center };
+            var procText = new TextBlock { Text = "APPS", Foreground = _config.IsProcessMonitorActive ? Brushes.White : Brushes.Gray, FontSize=11, FontWeight=FontWeights.Bold, Margin=new Thickness(6,0,8,0), VerticalAlignment = VerticalAlignment.Center };
+            
+            var dropdownBorder = new Border { 
+                Background = _dimBrush, CornerRadius = new CornerRadius(8), Margin=new Thickness(4,0,0,0), Padding=new Thickness(8,0,8,0),
+                Visibility = _config.IsProcessMonitorActive ? Visibility.Visible : Visibility.Collapsed,
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+            var dropdownLbl = new TextBlock { Text = _config.ProcessSortMetric, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center, FontSize=11, Margin=new Thickness(0,0,6,0), FontWeight = FontWeights.Bold };
+            var dropdownIcon = new PackIconMaterial { Kind = PackIconMaterialKind.ChevronDown, Width=12, Height=12, Foreground=Brushes.Gray, VerticalAlignment = VerticalAlignment.Center };
+            var drpStack = new StackPanel { Orientation = Orientation.Horizontal };
+            drpStack.Children.Add(dropdownLbl);
+            drpStack.Children.Add(dropdownIcon);
+            dropdownBorder.Child = drpStack;
+
+            var popup = new System.Windows.Controls.Primitives.Popup { StaysOpen = false, PlacementTarget = dropdownBorder, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom, AllowsTransparency = true };
+            
+            popup.Opened += (s,e) => _isDropdownOpen = true;
+            popup.Closed += (s,e) => { 
+                _isDropdownOpen = false;
+                Dispatcher.InvokeAsync(async () => {
+                    await System.Threading.Tasks.Task.Delay(50);
+                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned && !_isDropdownOpen) {
+                        Hud_MouseLeave(this, null!);
+                    }
+                });
+            };
+            
+            var popupBorder = new Border { Background = _darkBrush, BorderBrush = new SolidColorBrush(Color.FromArgb(0x44,0xFF,0xFF,0xFF)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Margin = new Thickness(0,4,0,0), Padding=new Thickness(4) };
+            var popupStack = new StackPanel();
+            popupBorder.Child = popupStack;
+            popup.Child = popupBorder;
+
+            string[] opts = { "CPU", "RAM", "DISK", "NETWORK", "GPU" };
+            PackIconMaterialKind[] icns = { PackIconMaterialKind.Cpu64Bit, PackIconMaterialKind.Memory, PackIconMaterialKind.Harddisk, PackIconMaterialKind.NetworkOutline, PackIconMaterialKind.ExpansionCardVariant };
+
+            for(int i=0; i<opts.Length; i++) {
+                string opt = opts[i];
+                var iborder = new Border { Background = Brushes.Transparent, CornerRadius=new CornerRadius(6), Padding=new Thickness(8,6,8,6), Cursor = System.Windows.Input.Cursors.Hand };
+                var istack = new StackPanel { Orientation = Orientation.Horizontal };
+                istack.Children.Add(new PackIconMaterial { Kind = icns[i], Width=12, Height=12, Foreground=Brushes.White, VerticalAlignment = VerticalAlignment.Center, Margin=new Thickness(0,0,8,0) });
+                istack.Children.Add(new TextBlock { Text = opt, Foreground=Brushes.White, FontSize=11, VerticalAlignment = VerticalAlignment.Center });
+                iborder.Child = istack;
+                
+                iborder.MouseEnter += (s,e) => iborder.Background = _dimBrush;
+                iborder.MouseLeave += (s,e) => iborder.Background = Brushes.Transparent;
+                iborder.MouseLeftButtonDown += (s,e) => {
+                    e.Handled = true;
+                    _config.ProcessSortMetric = opt;
+                    _config.Save();
+                    dropdownLbl.Text = opt;
+                    popup.IsOpen = false;
+                    _processManager.UpdateImmediate(opt); // update dynamically without full layout rebuild if possible
+                    UpdateProcessUI();
+                };
+                popupStack.Children.Add(iborder);
+            }
+
+            dropdownBorder.MouseEnter += (s,e) => { popup.IsOpen = true; };
+            dropdownBorder.MouseLeftButtonDown += (s,e) => { e.Handled = true; popup.IsOpen = true; };
+
+            processDiv.MouseLeftButtonDown += (s, e) => {
+                e.Handled = true;
+                _config.IsProcessMonitorActive = !_config.IsProcessMonitorActive;
+                _config.Save();
+                RebuildUIAndApplyConfig();
+            };
+
+            scrollStack.Children.Add(procIcon);
+            scrollStack.Children.Add(procText);
+            scrollStack.Children.Add(dropdownBorder);
+            processDiv.Child = scrollStack;
+            TrayElementsContainer.Children.Add(processDiv);
         }
 
         private PackIconMaterialKind GetIconForKey(string key)
@@ -970,7 +1081,135 @@ namespace ObsidianMonitor
                 }
             }
             
+            if (_config.IsProcessMonitorActive)
+            {
+                UpdateProcessUI();
+            }
+            
             EnforceTopmost();
+        }
+
+        private void UpdateProcessUI()
+        {
+            try
+            {
+                var topApps = _processManager.TopProcesses;
+
+                if (topApps == null || topApps.Count == 0)
+                {
+                    ProcessElementsContainer.Children.Clear();
+                    var emptyTxt = new TextBlock { Text = "No active apps.", Foreground = Brushes.Gray, FontStyle = FontStyles.Italic, Margin = new Thickness(10,5,10,5) };
+                    ProcessElementsContainer.Children.Add(emptyTxt);
+                    return;
+                }
+
+                // Ensure container only has Grids (clear if it has the "No apps" textblock)
+                if (ProcessElementsContainer.Children.Count > 0 && !(ProcessElementsContainer.Children[0] is Grid))
+                {
+                    ProcessElementsContainer.Children.Clear();
+                }
+
+                // Sync child count
+                while (ProcessElementsContainer.Children.Count > topApps.Count) {
+                    ProcessElementsContainer.Children.RemoveAt(ProcessElementsContainer.Children.Count - 1);
+                }
+                while (ProcessElementsContainer.Children.Count < topApps.Count) {
+                    var grid = new Grid { Margin = new Thickness(0,0,0,8) };
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+
+                    // Column 0 - Name + Icon
+                    var stack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+                    var img = new Image { Width = 18, Height = 18, Margin = new Thickness(0,0,8,0), Visibility = Visibility.Collapsed };
+                    var fallbackIcon = new PackIconMaterial { Kind = PackIconMaterialKind.Application, Width = 16, Height = 16, Foreground = Brushes.Gray, Margin = new Thickness(0,0,8,0), VerticalAlignment = VerticalAlignment.Center };
+                    
+                    var nameTxt = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+                    stack.Children.Add(img);
+                    stack.Children.Add(fallbackIcon);
+                    stack.Children.Add(nameTxt);
+                    Grid.SetColumn(stack, 0);
+
+                    // Column 1 to 5
+                    var cpuTxt = new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(cpuTxt, 1);
+                    var ramTxt = new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(ramTxt, 2);
+                    var gpuTxt = new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(gpuTxt, 3);
+                    var diskTxt = new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(diskTxt, 4);
+                    var netTxt = new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(netTxt, 5);
+
+                    grid.Children.Add(stack);
+                    grid.Children.Add(cpuTxt);
+                    grid.Children.Add(ramTxt);
+                    grid.Children.Add(gpuTxt);
+                    grid.Children.Add(diskTxt);
+                    grid.Children.Add(netTxt);
+                    ProcessElementsContainer.Children.Add(grid);
+                }
+
+                Brush dimNorm = new SolidColorBrush(Color.FromArgb(0xFF, 0xAA, 0xAA, 0xAA));
+                bool isCpu = _config.ProcessSortMetric == "CPU";
+                bool isRam = _config.ProcessSortMetric == "RAM";
+                bool isGpu = _config.ProcessSortMetric == "GPU";
+                bool isDisk = _config.ProcessSortMetric == "DISK";
+                bool isNet = _config.ProcessSortMetric == "NETWORK";
+
+                for (int i = 0; i < topApps.Count; i++)
+                {
+                    var app = topApps[i];
+                    var grid = (Grid)ProcessElementsContainer.Children[i];
+                    
+                    // Hacky indexing to retrieve elements from our standardized structure
+                    var stack = (StackPanel)grid.Children[0];
+                    var img = (Image)stack.Children[0];
+                    var fallback = (PackIconMaterial)stack.Children[1];
+                    var nameTxt = (TextBlock)stack.Children[2];
+                    var cpuTxt = (TextBlock)grid.Children[1];
+                    var ramTxt = (TextBlock)grid.Children[2];
+                    var gpuTxt = (TextBlock)grid.Children[3];
+                    var diskTxt = (TextBlock)grid.Children[4];
+                    var netTxt = (TextBlock)grid.Children[5];
+
+                    if (app.IconSource != null) {
+                        img.Source = app.IconSource;
+                        img.Visibility = Visibility.Visible;
+                        fallback.Visibility = Visibility.Collapsed;
+                    } else {
+                        img.Visibility = Visibility.Collapsed;
+                        fallback.Visibility = Visibility.Visible;
+                    }
+
+                    string shortName = app.Name.Length > 16 ? app.Name.Substring(0, 16) + ".." : app.Name;
+                    nameTxt.Text = shortName;
+
+                    cpuTxt.Text = $"{app.CpuUsage:F1}%";
+                    cpuTxt.Foreground = isCpu ? _cyanBrush : dimNorm;
+                    cpuTxt.FontWeight = isCpu ? FontWeights.Bold : FontWeights.Normal;
+
+                    ramTxt.Text = $"{(app.RamUsageBytes / (1024*1024)):F0} MB";
+                    ramTxt.Foreground = isRam ? _yellowBrush : dimNorm;
+                    ramTxt.FontWeight = isRam ? FontWeights.Bold : FontWeights.Normal;
+
+                    gpuTxt.Text = $"{app.GpuUsage:F1}%";
+                    gpuTxt.Foreground = isGpu ? _redBrush : dimNorm;
+                    gpuTxt.FontWeight = isGpu ? FontWeights.Bold : FontWeights.Normal;
+
+                    diskTxt.Text = $"{app.DiskUsage:F1} MB/s";
+                    diskTxt.Foreground = isDisk ? _greenBrush : dimNorm;
+                    diskTxt.FontWeight = isDisk ? FontWeights.Bold : FontWeights.Normal;
+
+                    netTxt.Text = $"{app.NetworkUsage:F1} MB/s";
+                    netTxt.Foreground = isNet ? Brushes.White : dimNorm;
+                    netTxt.FontWeight = isNet ? FontWeights.Bold : FontWeights.Normal;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Safely log or ignore rendering exceptions to prevent complete app crash
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+            }
         }
 
         private void UpdateActiveGameIcon(DashboardUIElement fpsUI)
@@ -1050,13 +1289,48 @@ namespace ObsidianMonitor
             var ease = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.3 };
             QuickAccessTray.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(300)));
             TrayScale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(400)) { EasingFunction = ease });
+
+            if (_config.IsProcessMonitorActive && !_config.IsProcessMonitorPinned)
+            {
+                ProcessContainer.Visibility = Visibility.Visible;
+                ProcessContainer.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(300)));
+            }
         }
 
         private void Hud_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (_isDropdownOpen) return;
+
             var ease = new QuinticEase { EasingMode = EasingMode.EaseIn };
             QuickAccessTray.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(200)));
             TrayScale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(250)) { EasingFunction = ease });
+            
+            if (!_config.IsProcessMonitorPinned)
+            {
+                ProcessContainer.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(250)) { EasingFunction = ease });
+                System.Threading.Tasks.Task.Delay(250).ContinueWith(_ => Dispatcher.Invoke(() => {
+                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned && !_isDropdownOpen)
+                        ProcessContainer.Visibility = Visibility.Collapsed;
+                }));
+            }
+        }
+
+        private void PinButton_Click(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+            _config.IsProcessMonitorPinned = !_config.IsProcessMonitorPinned;
+            _config.Save();
+            ApplyPinState();
+            
+            if (!_config.IsProcessMonitorPinned && !MasterStack.IsMouseOver)
+            {
+                var ease = new QuinticEase { EasingMode = EasingMode.EaseIn };
+                ProcessContainer.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(250)) { EasingFunction = ease });
+                System.Threading.Tasks.Task.Delay(250).ContinueWith(_ => Dispatcher.Invoke(() => {
+                    if (!MasterStack.IsMouseOver && !_config.IsProcessMonitorPinned && !_isDropdownOpen)
+                        ProcessContainer.Visibility = Visibility.Collapsed;
+                }));
+            }
         }
 
         protected override void OnClosed(EventArgs e)

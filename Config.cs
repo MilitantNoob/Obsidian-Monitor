@@ -16,7 +16,12 @@ namespace ObsidianMonitor
 
         // New Dynamic Properties
         public List<string> OrderedElements { get; set; } = new List<string> { "CPU", "GPU", "RAM" };
-        public List<string> SelectedFans { get; set; } = new List<string> { "FANS" }; // Legacy fans toggle or specific fan IDs
+        public bool IsProcessMonitorActive { get; set; } = false;
+        public bool IsProcessMonitorPinned { get; set; } = false;
+        public string ProcessSortMetric { get; set; } = "RAM"; // CPU, RAM, DISK, NETWORK, GPU
+
+        // Legacy fans toggle or specific fan IDs
+        public List<string> SelectedFans { get; set; } = new List<string> { "FANS" }; 
         
         // Hotkey Settings
         public uint ToggleModifier { get; set; } = 0x0001; // Default MOD_ALT

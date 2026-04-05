@@ -221,7 +221,15 @@
                             <iconPacks:PackIconMaterial Kind="Monitor" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <TextBlock Text="7. SYSTEM" Style="{StaticResource HeaderStyle}"/>
                         </StackPanel>
-                        <CheckBox x:Name="AutoStartCheck" Content="Run automatically on startup" Style="{StaticResource AppleSwitch}" Checked="AutoStartCheck_Checked" Unchecked="AutoStartCheck_Checked" Margin="0,5,0,20"/>
+                        <CheckBox x:Name="AutoStartCheck" Content="Run automatically on startup" Style="{StaticResource AppleSwitch}" Checked="AutoStartCheck_Checked" Unchecked="AutoStartCheck_Checked" Margin="0,5,0,10"/>
+
+                        <!-- 8. PROCESS MONITOR -->
+                        <StackPanel Orientation="Horizontal" Margin="0,15,0,8">
+                            <iconPacks:PackIconMaterial Kind="MonitorStar" Foreground="#00FFFF" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="8. PROCESS MONITOR" Style="{StaticResource HeaderStyle}"/>
+                        </StackPanel>
+                        <CheckBox x:Name="ProcessMonitorCheck" Content="Enable Process Monitoring (HUD + Apps)" Style="{StaticResource AppleSwitch}" Checked="SettingChanged" Unchecked="SettingChanged" Margin="0,5,0,5"/>
+                        <TextBlock Text="Note: Toggled globally here. Show/hide tray toggles via Elements UI." Style="{StaticResource SubHeaderStyle}" Margin="0,0,0,10"/>
                     </StackPanel>
                 </ScrollViewer>
 

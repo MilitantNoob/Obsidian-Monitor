@@ -1,16 +1,11 @@
-# [Core]
-bin/
-obj/
-*.user
-*.userosscache
-*.sln.docstates
-
-# [Visual Studio]
+# Visual Studio
 .vs/
-*.suo
+[Bb]in/
+[Oo]bj/
 *.user
 *.userosscache
 *.sln.docstates
+*.suo
 *.opendb
 *.dbmdl
 *.dbproject
@@ -18,15 +13,24 @@ obj/
 *.vshost.exe
 *.vshost.exe.config
 *.vshost.exe.manifest
-*.xml
-*.cache
+
+# Build and Publish
+publish/
+dist/
 *.log
 *.tmp
 *.temp
 *.bak
 *.sav
 *.old
+*.cache
 
-# [Project specific]
+# Project Specific
 config.json
-build_hw.txt
+
+# Project Specific Assets
+ObsidianMonitor_Setup.exe
+
+# Website Project (Hidden from main repo)
+ObsidianMonitor-Website/
+

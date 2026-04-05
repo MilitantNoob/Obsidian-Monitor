@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ObsidianMonitor"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-        Title="Obsidian Monitor" SizeToContent="Width" Height="250"
+        Title="Obsidian Monitor" SizeToContent="WidthAndHeight" 
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
         SnapsToDevicePixels="True" UseLayoutRounding="True" SizeChanged="Window_SizeChanged">
@@ -13,7 +13,7 @@
             <ScaleTransform x:Name="SettingsScale" ScaleX="1.0" ScaleY="1.0"/>
         </Grid.LayoutTransform>
         
-        <StackPanel x:Name="MasterStack" VerticalAlignment="Top" HorizontalAlignment="Center" MouseEnter="Hud_MouseEnter" MouseLeave="Hud_MouseLeave">
+        <StackPanel x:Name="MasterStack" VerticalAlignment="Top" HorizontalAlignment="Center" Background="Transparent" MouseEnter="Hud_MouseEnter" MouseLeave="Hud_MouseLeave">
             <StackPanel.RenderTransform>
                 <TranslateTransform x:Name="MasterTranslate" Y="0"/>
             </StackPanel.RenderTransform>
@@ -28,7 +28,7 @@
                     <!-- Dynamic Elements will be injected here via code-behind -->
                 </StackPanel>
             </Border>
-            
+
             <!-- Quick Access Tray -->
             <Border x:Name="QuickAccessTray" Background="#050505" CornerRadius="18"
                     BorderBrush="#1B1B1B" BorderThickness="1.5" Opacity="0"
@@ -42,6 +42,39 @@
                         <!-- Tiny toggle items injected via code-behind -->
                     </WrapPanel>
                 </ScrollViewer>
+            </Border>
+
+            <!-- Process Monitor Container -->
+            <Border x:Name="ProcessContainer" Background="#0A0A0A" CornerRadius="20"
+                    BorderBrush="#222222" BorderThickness="1.5" Opacity="0" Visibility="Collapsed"
+                    Margin="0,8,0,0" Padding="15,10" HorizontalAlignment="Center" MinWidth="680">
+                <Grid>
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="75" />
+                                <ColumnDefinition Width="75" />
+                                <ColumnDefinition Width="75" />
+                                <ColumnDefinition Width="75" />
+                                <ColumnDefinition Width="75" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="APP NAME" Foreground="Gray" FontSize="11" FontWeight="Bold" />
+                            <TextBlock Grid.Column="1" Text="CPU" Foreground="Gray" FontSize="11" FontWeight="Bold" TextAlignment="Right"/>
+                            <TextBlock Grid.Column="2" Text="RAM" Foreground="Gray" FontSize="11" FontWeight="Bold" TextAlignment="Right"/>
+                            <TextBlock Grid.Column="3" Text="GPU" Foreground="Gray" FontSize="11" FontWeight="Bold" TextAlignment="Right"/>
+                            <TextBlock Grid.Column="4" Text="DISK" Foreground="Gray" FontSize="11" FontWeight="Bold" TextAlignment="Right"/>
+                            <TextBlock Grid.Column="5" Text="NET" ToolTip="Network" Foreground="Gray" FontSize="11" FontWeight="Bold" TextAlignment="Right"/>
+                        </Grid>
+                        <StackPanel x:Name="ProcessElementsContainer" Orientation="Vertical">
+                            <!-- Process Rows will be injected here via code-behind -->
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <Border x:Name="PinButton" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-8,-5" Background="Transparent" MouseLeftButtonDown="PinButton_Click" Cursor="Hand" ToolTip="Pin to dynamic island">
+                        <iconPacks:PackIconMaterial x:Name="PinIcon" Kind="PinOutline" Foreground="Gray" Width="14" Height="14"/>
+                    </Border>
+                </Grid>
             </Border>
         </StackPanel>
     </Grid>
